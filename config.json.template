@@ -1,0 +1,8 @@
+{
+    "app_name": "AppName",
+    "token_signing_key": "Secret key for signing JWTs.",
+    "token_signing_algorithm": "Name of the algorithm for signing the token.",
+    // change the below two paths if using a different file storage than the default file system
+    "file_storage_path": "storage",
+    "default_profile_pic_path": "storage/auth/default/default_profile_pic.jpg"
+}

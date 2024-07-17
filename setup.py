@@ -1,12 +1,13 @@
 """Python setup.py for chats package"""
+
 import io
 import os
+
 from setuptools import setup
 
 
 def read(*paths, **kwargs):
-    """Read the contents of a text file safely.
-    """
+    """Read the contents of a text file safely."""
 
     content = ""
     with io.open(
