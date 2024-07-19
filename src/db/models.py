@@ -4,7 +4,7 @@ Base = declarative_base()
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import declarative_base, relationship
 
 from src.roles import Roles
@@ -24,6 +24,7 @@ class DB_User(Base):
     role = Column(Integer, default=Roles.USER.value)
 
     profile = relationship("DB_Profile", back_populates="user")
+    as_chat_member_in = relationship("DB_ChatMember", back_populates="user")
 
 
 class DB_Profile(Base):
@@ -36,3 +37,60 @@ class DB_Profile(Base):
     date_of_birth = Column(Date, default=datetime.now())
 
     user = relationship("DB_User", back_populates="profile")
+
+
+class DB_Chat(Base):
+    __tablename__ = "chats"
+
+    chat_id = Column(Integer, primary_key=True)
+    name = Column(String(200), nullable=False)
+    create_date = Column(Date, default=datetime.now(), nullable=False)
+
+    members = relationship("DB_ChatMember", back_populates="chat")
+
+
+class DB_ChatMember(Base):
+    __tablename__ = "chat_members"
+
+    chat_member_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True)
+    chat_id = Column(Integer, ForeignKey("chats.chat_id", ondelete="CASCADE"), nullable=False)
+    date_when_added = Column(Date, default=datetime.now(), nullable=False)
+    is_creator = Column(Boolean, default=True, nullable=False)
+
+    chat = relationship("DB_Chat", back_populates="members")
+    user = relationship("DB_User", back_populates="as_chat_member_in")
+    messages = relationship("DB_Message", back_populates="chat_member")
+
+
+class DB_Message(Base):
+    __tablename__ = "messages"
+
+    message_id = Column(Integer, primary_key=True)
+    chat_member_id = Column(
+        Integer, ForeignKey("chat_members.chat_member_id", ondelete="SET NULL"), nullable=True
+    )
+    text = Column(Text, nullable=False)
+    time_sent = Column(Date, default=datetime.now(), nullable=False)
+    reply_to = Column(Integer, ForeignKey("messages.message_id"), nullable=True)
+
+    chat_member = relationship("DB_ChatMember", back_populates="messages")
+    parent_message = relationship(
+        "DB_Message", back_populates="child_message", uselist=False, remote_side=reply_to
+    )
+    child_message = relationship(
+        "DB_Message", back_populates="parent_message", uselist=False, remote_side=message_id
+    )
+    images = relationship("DB_MessageImage", back_populates="message")
+
+
+class DB_MessageImage(Base):
+    __tablename__ = "message_images"
+
+    message_image_id = Column(Integer, primary_key=True)
+    message_id = Column(
+        Integer, ForeignKey("messages.message_id", ondelete="CASCADE"), nullable=False
+    )
+    image_path = Column(String(300), nullable=False)
+
+    message = relationship("DB_Message", back_populates="images")
