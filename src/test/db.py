@@ -8,16 +8,19 @@ from sqlalchemy.pool import StaticPool
 
 from src.db.models import Base
 
+# Creating an in-memory database that persists during the tests instead of the main DB.
+
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
-    poolclass=StaticPool,  # using
+    poolclass=StaticPool,
 )
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
+# creating the database tables based on the models, normally done via alembic migrations
 Base.metadata.create_all(bind=engine)
 
 

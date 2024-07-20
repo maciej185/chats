@@ -18,6 +18,7 @@ class BaseTestClient(TestClient):
 
     AUTHENTICATION_ENDPOINT_URL = "/auth/token"
     REGISTRATION_ENDPOINT_URL = "/auth/register"
+    CREATE_CHAT_ENDPOINT_URL = "/chat/add"
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -85,6 +86,17 @@ class BaseTestClient(TestClient):
             self.headers.pop("Authorization")
         except KeyError:
             pass
+
+    def create_chat(self, chat_name: str) -> None:
+        """Create a chat.
+
+        The method creates a new chat by sending a request to an appropriate
+        endpoint with the required data.
+
+        Args:
+            - chat_name: Name to be given to the new chat.
+        """
+        self.post(self.CREATE_CHAT_ENDPOINT_URL, json={"name": chat_name})
 
 
 client = BaseTestClient(app)
