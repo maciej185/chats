@@ -7,3 +7,4 @@ class Tags(Enum):
     """Enum the tag names for the endpoints."""
 
     auth = "Authentication"
+    chat = "Chat"
