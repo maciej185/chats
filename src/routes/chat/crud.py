@@ -82,3 +82,26 @@ def create_chat_member_in_db(
     db.commit()
     db.refresh(db_chat_member)
     return db_chat_member
+
+
+def get_chat_members(db: Session, chat_id: int) -> list[DB_ChatMember]:
+    """Return members of a given chat.
+
+    Args:
+        - db: An instance of the sqlalchemy.orm.Session class, representing the current
+                DB session.
+        - chat_id: ID of the chat whose members are meant to be fetched.
+
+    Raises:
+        HTTPException: Raised when a chat with given ID does not exist in the DB.
+    """
+    db_chat = db.query(DB_Chat).filter(DB_Chat.chat_id == chat_id).first()
+    if db_chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat with the given ID was not found in the DB.",
+        )
+    return [
+        chat_member
+        for chat_member in db.query(DB_ChatMember).filter(DB_ChatMember.chat_id == chat_id).all()
+    ]
