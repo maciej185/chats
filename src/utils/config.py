@@ -3,9 +3,10 @@
 import json
 import os
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, DirectoryPath, FilePath
+from pydantic import BaseModel, DirectoryPath, FilePath, HttpUrl
 
 load_dotenv()
 
@@ -25,6 +26,7 @@ class ConfigView(BaseModel):
     token_signing_algorithm: str
     file_storage_path: DirectoryPath
     default_profile_pic_path: FilePath
+    allowed_origins: list[HttpUrl | Literal["*"]]
 
 
 class ConfigManager:
