@@ -1,0 +1,36 @@
+services:
+  mysql:
+    image: mysql:latest
+    volumes:
+      - chats_my_sql_volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret 
+
+  backend:
+    image: chat_app_backend
+    build: .
+    environment:
+      DB_HOST: mysql
+      CONFIG_PATH: config.json
+      DB_ENGINE: mysql+pymysql
+      DB_USERNAME: root
+      DB_PASSWORD: secret
+      DB_PORT: 3306
+      DB_NAME: mysql
+    ports:
+      - "8000:80"
+    command: bash -c "alembic upgrade head && fastapi run src/main.py --port 80"
+    depends_on:
+     - mysql
+    restart: on-failure:10
+    develop:
+      watch:
+        - path: ./src
+          action: rebuild
+    volumes:
+      - chats_backend_file_storage_volume:/chats/storage
+
+
+volumes:
+  chats_my_sql_volume:
+  chats_backend_file_storage_volume:
