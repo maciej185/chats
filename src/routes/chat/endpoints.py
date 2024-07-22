@@ -8,6 +8,8 @@ from fastapi import (
     Depends,
     HTTPException,
     Path,
+    Query,
+    Response,
     WebSocket,
     WebSocketDisconnect,
     status,
@@ -17,7 +19,7 @@ from sqlalchemy.orm import Session
 from src.db.models import DB_Chat, DB_ChatMember, DB_User
 from src.dependencies import get_db
 from src.roles import Roles
-from src.routes.auth.utils import RoleChecker, get_current_user
+from src.routes.auth.utils import RoleChecker, get_current_user, get_current_user_ws
 from src.tags import Tags
 
 from .connection_manager import ConnectionManager
@@ -108,7 +110,10 @@ manager = ConnectionManager()
     "/{chat_id}",
 )
 async def chat(
-    ws: WebSocket, chat_id: Annotated[int, Path()], db: Annotated[Session, Depends(get_db)]
+    ws: WebSocket,
+    chat_id: Annotated[int, Path()],
+    db: Annotated[Session, Depends(get_db)],
+    token: Annotated[str, Query()],
 ) -> None:
     """Send/receive messages in the given chat.
 
@@ -121,6 +126,10 @@ async def chat(
                 returned from the annotated dependency function.
     - **current_user**: An instance of the DB_User class, representing the currently logged in user.
     """
+    user = get_current_user_ws(db=db, token=token)
+    if user is None:
+        await ws.send_denial_response(Response("Unauthorized", status_code=401))
+        return
     await manager.connect(ws)
     try:
         while True:
