@@ -160,3 +160,18 @@ def save_message_in_db(
     db.commit()
     db.refresh(db_message)
     return db_message
+
+
+def get_chats_from_db(db: Session, user_id: int) -> list[DB_Chat]:
+    """Get chats that the user with the given ID is a member of.
+
+    Args:
+        - db: An instance of the sqlalchemy.orm.Session class, representing
+            the current db session.
+        - user_id: ID of the user whose chats are meant to be fetched.
+    """
+    db_chat_member_objects = db.query(DB_ChatMember).filter(DB_ChatMember.user_id == user_id).all()
+    return [
+        db.query(DB_Chat).filter(DB_Chat.chat_id == db_chat_member.chat_id).first()
+        for db_chat_member in db_chat_member_objects
+    ]
