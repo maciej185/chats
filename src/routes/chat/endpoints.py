@@ -23,7 +23,14 @@ from src.routes.auth.utils import RoleChecker, get_current_user, get_current_use
 from src.tags import Tags
 
 from .connection_manager import ConnectionManager
-from .crud import create_chat_in_db, create_chat_member_in_db, get_chat_members
+from .crud import (
+    chat_exists,
+    create_chat_in_db,
+    create_chat_member_in_db,
+    get_chat_member_from_db,
+    get_chat_members,
+    save_message_in_db,
+)
 from .models import Chat, ChatAdd, ChatMember, ChatMemberAdd
 
 router = APIRouter(prefix="/chat", tags=[Tags.chat.value])
@@ -128,12 +135,31 @@ async def chat(
     """
     user = get_current_user_ws(db=db, token=token)
     if user is None:
-        await ws.send_denial_response(Response("Unauthorized", status_code=401))
+        await ws.send_denial_response(
+            Response("Unauthorized", status_code=status.HTTP_401_UNAUTHORIZED)
+        )
+        return
+    if not chat_exists(db=db, chat_id=chat_id):
+        await ws.send_denial_response(
+            Response("Chat does not exist", status_code=status.HTTP_404_NOT_FOUND)
+        )
+        return
+    db_chat_member = get_chat_member_from_db(db=db, chat_id=chat_id, user_id=user.user_id)
+    if db_chat_member is None:
+        await ws.send_denial_response(
+            Response("User is not member of the chat", status_code=status.HTTP_404_NOT_FOUND)
+        )
         return
     await manager.connect(ws)
     try:
         while True:
             data = await ws.receive_json()
+            save_message_in_db(
+                db=db,
+                chat_member=db_chat_member,
+                text=data.get("message"),
+                reply_to=data.get("reply_to"),
+            )
             await manager.broadcast(data)
     except WebSocketDisconnect:
         manager.disconnect(ws)
