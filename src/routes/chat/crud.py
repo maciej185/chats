@@ -199,3 +199,24 @@ def get_chat_from_db(db: Session, chat_id: int) -> DB_Chat:
             detail="Chat with the given ID was not found in the DB.",
         )
     return db_chat
+
+
+def get_potential_chat_members_from_db(db: Session, chat_id: int) -> list[DB_User]:
+    """Get potential chat members.
+
+    The method fetches users who are not yet
+    a member of the given chat.
+
+    Args:
+        db: Instance of the sqlalchemy.orm.Session class,
+            representing the current DB session.
+        chat_id: ID of the chat to fetch potential users for.
+
+    Returns:
+        A list with with instances of the DB_User model,
+        representing potential new chat members.
+    """
+    chat_members = set(
+        [chat_member.user for chat_member in get_chat_members(db=db, chat_id=chat_id)]
+    )
+    return list(set(db.query(DB_User).all()) - chat_members)

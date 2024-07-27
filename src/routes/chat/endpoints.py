@@ -17,9 +17,15 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from src.db.models import DB_Chat, DB_ChatMember, DB_User
-from src.dependencies import get_db
+from src.dependencies import (
+    RoleChecker,
+    check_if_user_is_chat_member,
+    get_current_user,
+    get_current_user_ws,
+    get_db,
+)
 from src.roles import Roles
-from src.routes.auth.utils import RoleChecker, get_current_user, get_current_user_ws
+from src.routes.auth.models import UserInResponse
 from src.tags import Tags
 
 from .connection_manager import ConnectionManager
@@ -31,6 +37,7 @@ from .crud import (
     get_chat_member_from_db,
     get_chat_members,
     get_chats_from_db,
+    get_potential_chat_members_from_db,
     save_message_in_db,
 )
 from .models import Chat, ChatAdd, ChatMember, ChatMemberAdd
@@ -202,3 +209,28 @@ def get_chat(chat_id: Annotated[int, Path()], db: Annotated[Session, Depends(get
         An instance of the DB_Chat with the given ID.
     """
     return get_chat_from_db(db=db, chat_id=chat_id)
+
+
+@router.get(
+    "/get_potential_members/{chat_id}",
+    response_model=list[UserInResponse],
+    dependencies=[
+        Depends(check_if_user_is_chat_member),
+        Depends(RoleChecker(allowed_roles=[Roles.ADMIN.value, Roles.USER.value])),
+    ],
+)
+def get_potential_members(
+    chat_id: Annotated[int, Path()], db: Annotated[Session, Depends(get_db)]
+) -> list[DB_User]:
+    """Get potential new members for a given chat.
+
+    Args:
+    - **chat_id**: ID of the chat to fetch potential new users for.
+    - **db**: An instance of the sqlachemy.orm.Session class, representing the current DB session,
+                returned from the annotated dependency function.
+
+    Returns:
+        A list with with instances of the DB_User model,
+        representing potential new chat members.
+    """
+    return get_potential_chat_members_from_db(db=db, chat_id=chat_id)
