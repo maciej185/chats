@@ -1,5 +1,7 @@
 """Pydantic models for the chats package."""
 
+from datetime import date
+
 from pydantic import BaseModel
 
 from src.routes.auth.models import UserInResponse
@@ -71,6 +73,7 @@ class MessageBase(BaseModel):
     chat_member_id: int
     text: str
     reply_to: int | None = None
+    time_sent: date
 
     class Config:
         from_attributes = True

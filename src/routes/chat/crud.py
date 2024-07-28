@@ -220,3 +220,33 @@ def get_potential_chat_members_from_db(db: Session, chat_id: int) -> list[DB_Use
         [chat_member.user for chat_member in get_chat_members(db=db, chat_id=chat_id)]
     )
     return list(set(db.query(DB_User).all()) - chat_members)
+
+
+def get_messages_from_db(
+    db: Session, chat_id: int, index_from_the_top: int, no_of_messages_to_fetch: int = 10
+) -> list[DB_Message]:
+    """Fetch given number of messages from the given range.
+
+    The function selects the newest messages and returns only
+    the messages in a range starting from a given index.
+
+    Args:
+        db: Instance of the sqlalchemy.orm.Session class,
+            representing the current DB session.
+        chat_id: ID of the chat from which the messages
+            will be fetched.
+        index_from_the_top: An index specifying from which
+            point the messages will be returned.
+        no_of_messages_to_fetch: Specifies how many messages
+            will be fetched.
+    Returns:
+        A list of messages from a given range.
+    """
+    return (
+        db.query(DB_Message)
+        .join(DB_ChatMember)
+        .filter(DB_ChatMember.chat_id == chat_id)
+        .order_by(DB_Message.time_sent)
+        .slice(index_from_the_top, index_from_the_top + no_of_messages_to_fetch)
+        .all()
+    )
