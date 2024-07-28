@@ -175,3 +175,27 @@ def get_chats_from_db(db: Session, user_id: int) -> list[DB_Chat]:
         db.query(DB_Chat).filter(DB_Chat.chat_id == db_chat_member.chat_id).first()
         for db_chat_member in db_chat_member_objects
     ]
+
+
+def get_chat_from_db(db: Session, chat_id: int) -> DB_Chat:
+    """Return info about chat with the given ID.
+
+    Args:
+        db: An instance of the sqlalchemy.orm.Session
+            class, representing the current DB session.
+        chat_id: Info about chat with this ID will be fetched.
+
+    Raises:
+        HTTPException: Raised when a chat with the given ID
+            does not exist in the DB.
+
+    Returns:
+        An instance of the DB_Chat model.
+    """
+    db_chat = db.query(DB_Chat).filter(DB_Chat.chat_id == chat_id).first()
+    if db_chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat with the given ID was not found in the DB.",
+        )
+    return db_chat

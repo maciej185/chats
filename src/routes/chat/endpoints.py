@@ -27,6 +27,7 @@ from .crud import (
     chat_exists,
     create_chat_in_db,
     create_chat_member_in_db,
+    get_chat_from_db,
     get_chat_member_from_db,
     get_chat_members,
     get_chats_from_db,
@@ -182,3 +183,22 @@ async def chat(
             await manager.broadcast(data)
     except WebSocketDisconnect:
         manager.disconnect(ws)
+
+
+@router.get(
+    "/{chat_id}",
+    response_model=Chat,
+    dependencies=[Depends(RoleChecker(allowed_roles=[Roles.ADMIN.value, Roles.USER.value]))],
+)
+def get_chat(chat_id: Annotated[int, Path()], db: Annotated[Session, Depends(get_db)]) -> DB_Chat:
+    """Return info about the chat with a given ID.
+
+    Args:
+    - **chat_id**: Info about chat with this ID will be fetched.
+    - **db**: An instance of the sqlachemy.orm.Session class, representing the current DB session,
+                returned from the annotated dependency function.
+
+    Returns:
+        An instance of the DB_Chat with the given ID.
+    """
+    return get_chat_from_db(db=db, chat_id=chat_id)
