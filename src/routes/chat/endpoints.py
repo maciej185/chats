@@ -2,7 +2,16 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    Path,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from src.db.models import DB_Chat, DB_ChatMember, DB_User
@@ -11,6 +20,7 @@ from src.roles import Roles
 from src.routes.auth.utils import RoleChecker, get_current_user
 from src.tags import Tags
 
+from .connection_manager import ConnectionManager
 from .crud import create_chat_in_db, create_chat_member_in_db, get_chat_members
 from .models import Chat, ChatAdd, ChatMember, ChatMemberAdd
 
@@ -89,3 +99,32 @@ def add_member(
     return create_chat_member_in_db(
         db=db, chat_id=chat_member_data.chat_id, user_id=chat_member_data.user_id, is_creator=False
     )
+
+
+manager = ConnectionManager()
+
+
+@router.websocket(
+    "/{chat_id}",
+)
+async def chat(
+    ws: WebSocket, chat_id: Annotated[int, Path()], db: Annotated[Session, Depends(get_db)]
+) -> None:
+    """Send/receive messages in the given chat.
+
+    Args:
+    - **ws**: An instance of the fastapi.WebSocket class, representing
+            the current connection.
+    - **chat_id**: ID of the chat to which the messages are being sent to
+                and from which they are received.
+    - **db**: An instance of the sqlachemy.orm.Session class, representing the current DB session,
+                returned from the annotated dependency function.
+    - **current_user**: An instance of the DB_User class, representing the currently logged in user.
+    """
+    await manager.connect(ws)
+    try:
+        while True:
+            data = await ws.receive_json()
+            await manager.broadcast(data)
+    except WebSocketDisconnect:
+        manager.disconnect(ws)
