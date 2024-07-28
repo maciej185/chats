@@ -145,6 +145,34 @@ def get_current_user(
     return user
 
 
+def get_current_user_ws(db: Session, token: str) -> DB_User | None:
+    """Get authenticated user in a WebSocket
+
+    Args:
+        - db: An instance of the sqlalchemy.orm.Session class representing
+                the current DB session.
+        - token: An authorization token.
+
+    Returns:
+        An instance of the DB_User model, representing the user
+        that matched the authorization token if there were no
+        errors, None otherwise.
+    """
+    try:
+        payload = jwt.decode(
+            token, config.token_signing_key, algorithms=[config.token_signing_algorithm]
+        )
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+    except jwt.InvalidTokenError:
+        return None
+    user = get_user(db, username)
+    if user is None:
+        return None
+    return user
+
+
 class RoleChecker:
     """DEpendency for checking the permissions of the currently logged in user."""
 
