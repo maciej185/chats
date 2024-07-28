@@ -29,6 +29,7 @@ from .crud import (
     create_chat_member_in_db,
     get_chat_member_from_db,
     get_chat_members,
+    get_chats_from_db,
     save_message_in_db,
 )
 from .models import Chat, ChatAdd, ChatMember, ChatMemberAdd
@@ -108,6 +109,24 @@ def add_member(
     return create_chat_member_in_db(
         db=db, chat_id=chat_member_data.chat_id, user_id=chat_member_data.user_id, is_creator=False
     )
+
+
+@router.get("/list", response_model=list[Chat])
+def get_chats(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[DB_User, Depends(get_current_user)],
+) -> list[DB_Chat]:
+    """Get chats that the current user is a member of.
+
+    Args:
+    - **db**: An instance of the sqlachemy.orm.Session class, representing the current DB session,
+                returned from the annotated dependency function.
+    - **current_user**: An instance of the DB_User class, representing the currently logged in user.
+
+    Returns:
+        A list of the chats that the currently authorized user is a member of.
+    """
+    return get_chats_from_db(db=db, user_id=current_user.user_id)
 
 
 manager = ConnectionManager()
