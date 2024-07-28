@@ -16,7 +16,7 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from src.db.models import DB_Chat, DB_ChatMember, DB_User
+from src.db.models import DB_Chat, DB_ChatMember, DB_Message, DB_User
 from src.dependencies import (
     RoleChecker,
     check_if_user_is_chat_member,
@@ -37,10 +37,11 @@ from .crud import (
     get_chat_member_from_db,
     get_chat_members,
     get_chats_from_db,
+    get_messages_from_db,
     get_potential_chat_members_from_db,
     save_message_in_db,
 )
-from .models import Chat, ChatAdd, ChatMember, ChatMemberAdd
+from .models import Chat, ChatAdd, ChatMember, ChatMemberAdd, Message
 
 router = APIRouter(prefix="/chat", tags=[Tags.chat.value])
 
@@ -234,3 +235,31 @@ def get_potential_members(
         representing potential new chat members.
     """
     return get_potential_chat_members_from_db(db=db, chat_id=chat_id)
+
+
+@router.get(
+    "/messages/{chat_id}",
+    response_model=list[Message],
+    dependencies=[
+        Depends(check_if_user_is_chat_member),
+        Depends(RoleChecker(allowed_roles=[Roles.ADMIN.value, Roles.USER.value])),
+    ],
+)
+def get_messages(
+    chat_id: Annotated[int, Path()],
+    index_from_the_top: Annotated[int, Query()],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[DB_Message]:
+    """Returna given number of messages from a given chat.
+
+    Args:
+    - **chat_id**: ID of the chat from which the messages will be fetched.
+    - **index_from_the_top**: An index specifying from which point the messages will be returned.
+    - **db**: An instance of the sqlachemy.orm.Session class, representing the current DB session,
+                returned from the annotated dependency function.
+
+    Returns:
+        An array of instances of the DB_Messages model, representing messages
+        sent in a given chat.
+    """
+    return get_messages_from_db(db=db, chat_id=chat_id, index_from_the_top=index_from_the_top)
