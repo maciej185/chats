@@ -9,7 +9,7 @@ from pydantic import FilePath
 from sqlalchemy.orm import Session
 
 from src.db.models import DB_Profile, DB_User
-from src.dependencies import get_db
+from src.dependencies import RoleChecker, get_current_user, get_db
 from src.roles import Roles
 from src.tags import Tags
 from src.utils import FileStorageManager
@@ -22,7 +22,7 @@ from .crud import (
     update_users_profile_pic_path,
 )
 from .models import Profile, ProfileAdd, ProfileUpdate, Token, UserAdd, UserInResponse
-from .utils import RoleChecker, authenticate_user, create_access_token, get_current_user
+from .utils import authenticate_user, create_access_token
 
 router = APIRouter(prefix="/auth", tags=[Tags.auth])
 
