@@ -249,12 +249,14 @@ def get_messages(
     chat_id: Annotated[int, Path()],
     index_from_the_top: Annotated[int, Query()],
     db: Annotated[Session, Depends(get_db)],
+    no_of_messages_to_fetch: Annotated[int, Query()] = 10,
 ) -> list[DB_Message]:
     """Returna given number of messages from a given chat.
 
     Args:
     - **chat_id**: ID of the chat from which the messages will be fetched.
     - **index_from_the_top**: An index specifying from which point the messages will be returned.
+    = **no_of_messages_to_fetch**: Number of messages that will be fetched.
     - **db**: An instance of the sqlachemy.orm.Session class, representing the current DB session,
                 returned from the annotated dependency function.
 
@@ -262,4 +264,9 @@ def get_messages(
         An array of instances of the DB_Messages model, representing messages
         sent in a given chat.
     """
-    return get_messages_from_db(db=db, chat_id=chat_id, index_from_the_top=index_from_the_top)
+    return get_messages_from_db(
+        db=db,
+        chat_id=chat_id,
+        index_from_the_top=index_from_the_top,
+        no_of_messages_to_fetch=no_of_messages_to_fetch,
+    )
