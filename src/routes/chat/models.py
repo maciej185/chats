@@ -100,6 +100,7 @@ class Message(MessageWithoutParentOrChild):
 
     parent_message: MessageWithoutParentOrChild | None
     child_message: MessageWithoutParentOrChild | None
+    chat_member: ChatMemberWithoutChat
 
 
 class MessageImageBase(MessageBase):
