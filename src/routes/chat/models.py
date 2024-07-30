@@ -1,6 +1,6 @@
 """Pydantic models for the chats package."""
 
-from datetime import date
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -73,7 +73,7 @@ class MessageBase(BaseModel):
     chat_member_id: int
     text: str
     reply_to: int | None = None
-    time_sent: date
+    time_sent: datetime
 
     class Config:
         from_attributes = True
