@@ -253,7 +253,7 @@ def get_messages_from_db(
         db.query(DB_Message)
         .join(DB_ChatMember)
         .filter(DB_ChatMember.chat_id == chat_id)
-        .order_by(DB_Message.time_sent)
+        .order_by(DB_Message.time_sent.desc())
         .slice(index_from_the_top, index_from_the_top + no_of_messages_to_fetch)
         .all()
     )
