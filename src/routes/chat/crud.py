@@ -1,5 +1,7 @@
 """CRUD operations for the chat package."""
 
+from datetime import datetime
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -142,7 +144,7 @@ def get_chat_member_from_db(db: Session, chat_id: int, user_id: int) -> DB_ChatM
     )
 
 
-def save_message_in_db(
+async def save_message_in_db(
     db: Session, chat_member: DB_ChatMember, text: str, reply_to: int | None
 ) -> DB_Message:
     """Save given message in the DB.
@@ -155,7 +157,12 @@ def save_message_in_db(
         - text: Text of the message.
         - reply_to: ID of the message that the currently saved message is a reply to.
     """
-    db_message = DB_Message(chat_member_id=chat_member.chat_member_id, text=text, reply_to=reply_to)
+    db_message = DB_Message(
+        chat_member_id=chat_member.chat_member_id,
+        text=text,
+        reply_to=reply_to,
+        time_sent=datetime.now(),
+    )
     db.add(db_message)
     db.commit()
     db.refresh(db_message)

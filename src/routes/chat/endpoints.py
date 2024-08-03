@@ -14,6 +14,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from src.db.models import DB_Chat, DB_ChatMember, DB_Message, DB_User
@@ -182,13 +183,15 @@ async def chat(
     try:
         while True:
             data = await ws.receive_json()
-            save_message_in_db(
+            db_message = await save_message_in_db(
                 db=db,
                 chat_member=db_chat_member,
                 text=data.get("message"),
                 reply_to=data.get("reply_to"),
             )
-            await manager.broadcast(data)
+            await manager.broadcast(
+                Message.model_validate(db_message, from_attributes=True).model_dump(mode="json")
+            )
     except WebSocketDisconnect:
         manager.disconnect(ws)
 
