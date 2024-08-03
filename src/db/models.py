@@ -4,7 +4,7 @@ Base = declarative_base()
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import declarative_base, relationship
 
 from src.roles import Roles
@@ -71,7 +71,7 @@ class DB_Message(Base):
         Integer, ForeignKey("chat_members.chat_member_id", ondelete="SET NULL"), nullable=True
     )
     text = Column(Text, nullable=False)
-    time_sent = Column(Date, default=datetime.now(), nullable=False)
+    time_sent = Column(DateTime, default=datetime.now(), nullable=False)
     reply_to = Column(Integer, ForeignKey("messages.message_id"), nullable=True)
 
     chat_member = relationship("DB_ChatMember", back_populates="messages")
