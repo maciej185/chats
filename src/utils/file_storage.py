@@ -43,3 +43,31 @@ class FileStorageManager:
         with open(profile_pic_file_path, "wb") as f:
             f.write(profile_pic_file.file.read())
         return profile_pic_file_path
+
+    @classmethod
+    def save_message_image(
+        cls, user_id: int, chat_id: int, message_id: int, image: UploadFile
+    ) -> Path:
+        """Save an image sent in a given chat.
+
+        Args:
+            user_id: ID of the user who is sending the image.
+            chat_id: ID of the chat where the given image is sent.
+            message_id: ID of the chat messages that the given image object
+                is related to.
+            image: An instance of the fastapi.UploadFile class, representing the image that is meant to be uploaded.
+        Returns:
+            Path to the saved image.
+        """
+        image_file_path = Path(
+            cls.file_storage_root_path,
+            "chat_messages",
+            str(user_id),
+            str(chat_id),
+            str(message_id),
+            image.filename,
+        )
+        image_file_path.parent.mkdir(exist_ok=True, parents=True)
+        with open(image_file_path, "wb") as f:
+            f.write(image.file.read())
+        return image_file_path
