@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from fastapi import HTTPException, UploadFile, status
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.db.models import DB_Chat, DB_ChatMember, DB_Message, DB_MessageImage, DB_User
+from src.db.models import DB_Chat, DB_ChatMember, DB_Message, DB_User
 from src.utils import FileStorageManager
 
 from .models import ChatAdd
@@ -146,7 +146,11 @@ def get_chat_member_from_db(db: Session, chat_id: int, user_id: int) -> DB_ChatM
 
 
 async def save_message_in_db(
-    db: Session, chat_member: DB_ChatMember, text: str, reply_to: int | None
+    db: Session,
+    chat_member: DB_ChatMember,
+    text: str,
+    reply_to: int | None,
+    image_path: str | None = None,
 ) -> DB_Message:
     """Save given message in the DB.
 
@@ -157,44 +161,23 @@ async def save_message_in_db(
             in the given chat.
         - text: Text of the message.
         - reply_to: ID of the message that the currently saved message is a reply to.
+        - image_path: Path to the image if the message contains it.
+
+    Return:
+        An instance of the DB_Message model, representing the new message that has
+        just been saved in the DB.
     """
     db_message = DB_Message(
         chat_member_id=chat_member.chat_member_id,
         text=text,
         reply_to=reply_to,
         time_sent=datetime.now(),
+        image_path=image_path,
     )
     db.add(db_message)
     db.commit()
     db.refresh(db_message)
     return db_message
-
-
-async def save_image_in_db(
-    db: Session, chat_member: DB_ChatMember, message_id: int, image: UploadFile
-) -> DB_MessageImage:
-    """Save an image sent by a given user in the given chat.
-
-    Args:
-        - db: An instance of the sqlalchemy.orm.Session class, representing
-            the current db session.
-        chat_member: An instance of the DB_ChatMember model, representing the member
-            that is sending the image in the given chat.
-        message_id: ID of the intance of the DB_Message model that the given
-            image should be related to.
-        image: A stream of bytes representing the image that is meant to be saved.
-
-    Returns:
-        An instance of the DB_MessageImage model representing the saved image.
-    """
-    image_file_path = FileStorageManager.save_message_image(
-        user_id=chat_member.user_id, chat_id=chat_member.chat_id, message_id=message_id, image=image
-    )
-    db_message_image = DB_MessageImage(message_id=message_id, image_path=image_file_path)
-    db.add(db_message_image)
-    db.commit()
-    db.refresh(db_message_image)
-    return db_message_image
 
 
 def get_chats_from_db(db: Session, user_id: int) -> list[DB_Chat]:
