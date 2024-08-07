@@ -28,6 +28,7 @@ from src.dependencies import (
 from src.roles import Roles
 from src.routes.auth.models import UserInResponse
 from src.tags import Tags
+from src.utils import FileStorageManager
 
 from .connection_manager import ConnectionManager
 from .crud import (
@@ -182,16 +183,34 @@ async def chat(
     await manager.connect(ws)
     try:
         while True:
-            data = await ws.receive_json()
-            db_message = await save_message_in_db(
-                db=db,
-                chat_member=db_chat_member,
-                text=data.get("message"),
-                reply_to=data.get("reply_to"),
-            )
-            await manager.broadcast(
-                Message.model_validate(db_message, from_attributes=True).model_dump(mode="json")
-            )
+            try:
+                data = await ws.receive_json()
+                db_message = await save_message_in_db(
+                    db=db,
+                    chat_member=db_chat_member,
+                    text=data.get("message"),
+                    reply_to=data.get("reply_to"),
+                )
+                await manager.broadcast(
+                    Message.model_validate(db_message, from_attributes=True).model_dump(mode="json")
+                )
+            except KeyError:
+                pass
+
+            try:
+                image = await ws.receive_bytes()
+                image_path = await FileStorageManager.save_message_image(
+                    user_id=user.user_id, chat_id=chat_id, image=image
+                )
+                db_message = await save_message_in_db(
+                    db=db, chat_member=db_chat_member, text="", reply_to=None, image_path=image_path
+                )
+                await manager.broadcast(
+                    Message.model_validate(db_message, from_attributes=True).model_dump(mode="json")
+                )
+            except KeyError:
+                pass
+
     except WebSocketDisconnect:
         manager.disconnect(ws)
 
