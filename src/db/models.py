@@ -73,6 +73,7 @@ class DB_Message(Base):
     text = Column(Text, nullable=False)
     time_sent = Column(DateTime, default=datetime.now(), nullable=False)
     reply_to = Column(Integer, ForeignKey("messages.message_id"), nullable=True)
+    image_path = Column(String(400), nullable=True, default=None)
 
     chat_member = relationship("DB_ChatMember", back_populates="messages")
     parent_message = relationship(
@@ -81,16 +82,3 @@ class DB_Message(Base):
     child_message = relationship(
         "DB_Message", back_populates="parent_message", uselist=False, remote_side=message_id
     )
-    images = relationship("DB_MessageImage", back_populates="message")
-
-
-class DB_MessageImage(Base):
-    __tablename__ = "message_images"
-
-    message_image_id = Column(Integer, primary_key=True)
-    message_id = Column(
-        Integer, ForeignKey("messages.message_id", ondelete="CASCADE"), nullable=False
-    )
-    image_path = Column(String(300), nullable=False)
-
-    message = relationship("DB_Message", back_populates="images")

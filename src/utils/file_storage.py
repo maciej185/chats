@@ -1,6 +1,8 @@
 """Utilities for accessing the file storage."""
 
+import random
 import shutil
+import string
 from pathlib import Path
 
 from fastapi import UploadFile
@@ -45,9 +47,7 @@ class FileStorageManager:
         return profile_pic_file_path
 
     @classmethod
-    def save_message_image(
-        cls, user_id: int, chat_id: int, message_id: int, image: UploadFile
-    ) -> Path:
+    def save_message_image(cls, user_id: int, chat_id: int, message_id: int, image: bytes) -> Path:
         """Save an image sent in a given chat.
 
         Args:
@@ -55,19 +55,22 @@ class FileStorageManager:
             chat_id: ID of the chat where the given image is sent.
             message_id: ID of the chat messages that the given image object
                 is related to.
-            image: An instance of the fastapi.UploadFile class, representing the image that is meant to be uploaded.
+            image: A stream of bytes representing the image that is meant to be uploaded.
         Returns:
             Path to the saved image.
         """
+        file_name = "".join(
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(15)
+        )
         image_file_path = Path(
             cls.file_storage_root_path,
             "chat_messages",
             str(user_id),
             str(chat_id),
             str(message_id),
-            image.filename,
+            file_name + ".png",
         )
         image_file_path.parent.mkdir(exist_ok=True, parents=True)
         with open(image_file_path, "wb") as f:
-            f.write(image.file.read())
+            f.write(image)
         return image_file_path
