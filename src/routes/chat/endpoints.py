@@ -14,16 +14,19 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-from pydantic import ValidationError
+from fastapi.responses import FileResponse
+from pydantic import FilePath
 from sqlalchemy.orm import Session
 
 from src.db.models import DB_Chat, DB_ChatMember, DB_Message, DB_User
 from src.dependencies import (
     RoleChecker,
     check_if_user_is_chat_member,
+    check_if_user_is_chat_member_with_message,
     get_current_user,
     get_current_user_ws,
     get_db,
+    get_message,
 )
 from src.roles import Roles
 from src.routes.auth.models import UserInResponse
@@ -292,3 +295,33 @@ def get_messages(
         index_from_the_top=index_from_the_top,
         no_of_messages_to_fetch=no_of_messages_to_fetch,
     )
+
+
+@router.get(
+    "/image/{message_id}",
+    dependencies=[
+        Depends(check_if_user_is_chat_member_with_message),
+        Depends(RoleChecker(allowed_roles=[Roles.ADMIN.value, Roles.USER.value])),
+    ],
+    response_class=FileResponse,
+)
+def get_image(message: Annotated[DB_Message, Depends(get_message)]) -> str:
+    """Return image associated with a given message.
+
+    Args:
+    - **message**: Instance of the DB_Message model repesenting a message with that is
+        associated with an image that will be asynchronously streamed as a response.
+
+    Raises:
+        HttpException: Raised when the given message is not associated with any
+            image.
+
+    Returns:
+        Path to the image associated with the given image.
+    """
+    if message.image_path is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="There is no picture associated with the given message.",
+        )
+    return message.image_path

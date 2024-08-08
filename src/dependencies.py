@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from src.db import SessionLocal
-from src.db.models import DB_ChatMember, DB_User
+from src.db.models import DB_ChatMember, DB_Message, DB_User
 from src.utils import ConfigManager
 
 config = ConfigManager.get_config()
@@ -156,5 +156,37 @@ def check_if_user_is_chat_member(
     if current_user.user_id not in [chat_member.user_id for chat_member in chat_members]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Currently authorized user is not a member of the chat. Only chat members can add new members.",
+            detail="Currently authorized user is not a member of the chat.",
         )
+
+
+def get_message(
+    message_id: Annotated[int, Path()],
+    db: Annotated[Session, Depends(get_db)],
+) -> DB_Message:
+    """Get message with the given ID from DB.
+
+    Raises:
+        HTTPException: Raised when a message with the given ID does not exist.
+
+    Returns:
+        An instance of the DB_Message model.
+    """
+    db_message = db.query(DB_Message).filter(DB_Message.message_id == message_id).first()
+    if db_message is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message with the given ID was not found in the DB.",
+        )
+    return db_message
+
+
+def check_if_user_is_chat_member_with_message(
+    message: Annotated[DB_Message, Depends(get_message)],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[DB_User, Depends(get_current_user)],
+) -> None:
+    """Check if the currently logged in user is the given chat's member based on a message's ID."""
+    check_if_user_is_chat_member(
+        chat_id=message.chat_member.chat_id, db=db, current_user=current_user
+    )
