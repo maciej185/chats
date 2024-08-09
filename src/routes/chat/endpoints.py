@@ -208,9 +208,9 @@ async def chat(
                 db_message = await save_message_in_db(
                     db=db, chat_member=db_chat_member, text="", reply_to=None, image_path=image_path
                 )
-                await manager.broadcast(
-                    Message.model_validate(db_message, from_attributes=True).model_dump(mode="json")
-                )
+                message = Message.model_validate(db_message, from_attributes=True)
+                message.contains_image = True
+                await manager.broadcast(message.model_dump(mode="json"))
             except KeyError:
                 pass
 
