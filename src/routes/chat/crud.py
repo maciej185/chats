@@ -2,10 +2,11 @@
 
 from datetime import datetime
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from src.db.models import DB_Chat, DB_ChatMember, DB_Message, DB_User
+from src.db.models import DB_Chat, DB_ChatMember, DB_Message, DB_MessageImage, DB_User
+from src.utils import FileStorageManager
 
 from .models import ChatAdd
 
@@ -167,6 +168,33 @@ async def save_message_in_db(
     db.commit()
     db.refresh(db_message)
     return db_message
+
+
+async def save_image_in_db(
+    db: Session, chat_member: DB_ChatMember, message_id: int, image: UploadFile
+) -> DB_MessageImage:
+    """Save an image sent by a given user in the given chat.
+
+    Args:
+        - db: An instance of the sqlalchemy.orm.Session class, representing
+            the current db session.
+        chat_member: An instance of the DB_ChatMember model, representing the member
+            that is sending the image in the given chat.
+        message_id: ID of the intance of the DB_Message model that the given
+            image should be related to.
+        image: A stream of bytes representing the image that is meant to be saved.
+
+    Returns:
+        An instance of the DB_MessageImage model representing the saved image.
+    """
+    image_file_path = FileStorageManager.save_message_image(
+        user_id=chat_member.user_id, chat_id=chat_member.chat_id, message_id=message_id, image=image
+    )
+    db_message_image = DB_MessageImage(message_id=message_id, image_path=image_file_path)
+    db.add(db_message_image)
+    db.commit()
+    db.refresh(db_message_image)
+    return db_message_image
 
 
 def get_chats_from_db(db: Session, user_id: int) -> list[DB_Chat]:
