@@ -74,7 +74,7 @@ class MessageBase(BaseModel):
     text: str
     reply_to: int | None = None
     time_sent: datetime
-    image_path: FilePath | None = None
+    contains_image: bool = False
 
     class Config:
         from_attributes = True

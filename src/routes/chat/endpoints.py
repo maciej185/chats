@@ -275,7 +275,7 @@ def get_messages(
     index_from_the_top: Annotated[int, Query()],
     db: Annotated[Session, Depends(get_db)],
     no_of_messages_to_fetch: Annotated[int, Query()] = 10,
-) -> list[DB_Message]:
+) -> list[Message]:
     """Returna given number of messages from a given chat.
 
     Args:
@@ -289,12 +289,18 @@ def get_messages(
         An array of instances of the DB_Messages model, representing messages
         sent in a given chat.
     """
-    return get_messages_from_db(
+    db_messages = get_messages_from_db(
         db=db,
         chat_id=chat_id,
         index_from_the_top=index_from_the_top,
         no_of_messages_to_fetch=no_of_messages_to_fetch,
     )
+    messages = []
+    for db_message in db_messages:
+        message = Message.model_validate(db_message, from_attributes=True)
+        message.contains_image = True if not db_message.image_path is None else False
+        messages.append(message)
+    return messages
 
 
 @router.get(
