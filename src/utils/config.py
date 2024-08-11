@@ -11,6 +11,22 @@ from pydantic import BaseModel, DirectoryPath, FilePath, HttpUrl
 load_dotenv()
 
 
+class LoggingConfigView(BaseModel):
+    """Model for storing logging configuration.
+
+    Attributes:
+        file_path: Path to a file where where the logs will be saved,
+        level: Logging level,
+        filemode: Indicate whether now logs will overwrite the existing ones or be appended at the end of the file.,
+        format: Format of the logging message.
+    """
+
+    file_path: FilePath
+    level: str
+    filemode: str
+    format: str
+
+
 class ConfigView(BaseModel):
     """Model for storing config information.
 
@@ -27,6 +43,7 @@ class ConfigView(BaseModel):
     file_storage_path: DirectoryPath
     default_profile_pic_path: FilePath
     allowed_origins: list[HttpUrl | Literal["*"]]
+    logging_config: LoggingConfigView
 
 
 class ConfigManager:
