@@ -1,5 +1,6 @@
 """Endpoints for the chat package."""
 
+from logging import getLogger
 from typing import Annotated
 
 from fastapi import (
@@ -49,6 +50,8 @@ from .crud import (
 from .models import Chat, ChatAdd, ChatMember, ChatMemberAdd, Message
 
 router = APIRouter(prefix="/chat", tags=[Tags.chat.value])
+
+logger = getLogger(__name__)
 
 
 @router.post(
@@ -188,6 +191,7 @@ async def chat(
         while True:
             try:
                 data = await ws.receive_json()
+                logger.debug(data)
                 db_message = await save_message_in_db(
                     db=db,
                     chat_member=db_chat_member,
@@ -202,6 +206,7 @@ async def chat(
 
             try:
                 image = await ws.receive_bytes()
+                logger.debug("Image received")
                 image_path = await FileStorageManager.save_message_image(
                     user_id=user.user_id, chat_id=chat_id, image=image
                 )

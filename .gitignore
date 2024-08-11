@@ -169,3 +169,6 @@ config.json
 
 # local file storage 
 storage/*
+
+# logs
+logs.txt
