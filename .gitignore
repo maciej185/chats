@@ -166,3 +166,6 @@ config.json
 
 # files created when modifying diagrams in the docs
 *.bkp
+
+# local file storage 
+storage/*

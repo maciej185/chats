@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, FilePath
 
 from src.routes.auth.models import UserInResponse
 
@@ -74,6 +74,7 @@ class MessageBase(BaseModel):
     text: str
     reply_to: int | None = None
     time_sent: datetime
+    image_path: FilePath | None = None
 
     class Config:
         from_attributes = True
@@ -92,7 +93,6 @@ class MessageWithoutParentOrChild(MessageBase):
     """
 
     message_id: int
-    images: list["MessageImage"]
 
 
 class Message(MessageWithoutParentOrChild):
@@ -101,20 +101,3 @@ class Message(MessageWithoutParentOrChild):
     parent_message: MessageWithoutParentOrChild | None
     child_message: MessageWithoutParentOrChild | None
     chat_member: ChatMemberWithoutChat
-
-
-class MessageImageBase(MessageBase):
-    """Base MessageImage models."""
-
-    message_id: int
-    image_path: str
-
-
-class MessageImageAdd(MessageImageBase):
-    """Model for creating a new MessageImage."""
-
-
-class MessageImage(MessageImageBase):
-    """Model with all relevant MessageImage info."""
-
-    message_image_id: int
