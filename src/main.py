@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src import admin
 from src.routes import auth, chat
 from src.utils import ConfigManager
 
@@ -29,6 +30,7 @@ logging.basicConfig(
 
 app.include_router(auth.router)
 app.include_router(chat.router)
+app.include_router(admin.router)
 
 app.add_middleware(
     CORSMiddleware,

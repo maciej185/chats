@@ -8,3 +8,4 @@ class Tags(Enum):
 
     auth = "Authentication"
     chat = "Chat"
+    admin = "Admin"
